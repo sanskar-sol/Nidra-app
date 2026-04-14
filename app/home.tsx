@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 
+// Imports for Inter and Lora fonts [cite: 125]
 import { 
   useFonts, 
   Inter_300Light, 
@@ -20,7 +21,7 @@ const { height } = Dimensions.get('window');
 export default function Home() {
   const router = useRouter();
 
-  // Load fonts
+  // Load fonts for consistent UI feel [cite: 125, 162]
   let [fontsLoaded] = useFonts({
     Inter_300Light,
     Inter_400Regular,
@@ -29,23 +30,16 @@ export default function Home() {
     Lora_500Medium
   });
 
-  // Time state for the clock
+  // Time state for the live clock [cite: 135]
   const [time, setTime] = useState(dayjs());
 
-  // NEW: State variables for Next Alarm and Sleep Goal 
-  const [nextAlarm, setNextAlarm] = useState({
-    time: '6:56',
-    period: 'am'
-  });
-
-  const [sleepGoal, setSleepGoal] = useState({
-    hours: '6',
-    minutes: '57'
-  });
+  // Variables for Next Alarm and Sleep Goal [cite: 149]
+  const [nextAlarm] = useState({ time: '6:56', period: 'am' });
+  const [sleepGoal] = useState({ hours: '6', minutes: '57' });
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTime(dayjs());
+      setTime(dayjs()); // Updates time every second [cite: 140]
     }, 1000);
 
     return () => clearInterval(timer);
@@ -55,18 +49,18 @@ export default function Home() {
     return <View style={styles.container} />; 
   }
 
-  // Dynamic Greeting Logic [cite: 136, 139]
-  const currentHour = time.hour();
-  let greetingMessage = "Good evening";
+  // Logic to determine the greeting and emoji based on the current hour [cite: 136, 138, 139]
+  const currentHour = time.hour(); 
+  let greetingMessage = "Good evening 🌆";
 
   if (currentHour >= 5 && currentHour < 12) {
-    greetingMessage = "Good morning";
+    greetingMessage = "Good morning 🌅";
   } else if (currentHour >= 12 && currentHour < 17) {
-    greetingMessage = "Good afternoon";
+    greetingMessage = "Good afternoon ☀️";
   } else if (currentHour >= 17 && currentHour < 21) {
-    greetingMessage = "Good evening";
+    greetingMessage = "Good evening 🌆";
   } else {
-    greetingMessage = "Good night";
+    greetingMessage = "Good night 🌙";
   }
 
   return (
@@ -79,7 +73,6 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         bounces={false} 
       >
-        
         <View style={styles.header}>
           <Text style={styles.title}>निद्रा</Text>
           <Pressable onPress={() => router.push('/settings')}>
@@ -87,6 +80,7 @@ export default function Home() {
           </Pressable>
         </View>
 
+        {/* Dynamic greeting with simple emojis [cite: 139] */}
         <Text style={styles.greeting}>{greetingMessage}, San</Text>
 
         <View style={styles.clockContainer}>
@@ -101,7 +95,6 @@ export default function Home() {
         </View>
 
         <View style={styles.row}>
-          {/* Next Alarm Card using variables [cite: 144] */}
           <View style={styles.cardHalf}>
             <Text style={styles.cardSubtitle}>Next Alarm</Text>
             <View style={styles.timeValueRow}>
@@ -110,7 +103,6 @@ export default function Home() {
             </View>
           </View>
 
-          {/* Sleep Goal Card using variables [cite: 144] */}
           <View style={styles.cardHalf}>
             <Text style={styles.cardSubtitle}>Goal</Text>
             <View style={styles.timeValueRow}>
@@ -141,7 +133,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#1E1E1E', // Solid dark background [cite: 131]
   },
   scrollView: {
     flex: 1, 
@@ -167,7 +159,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 28,
     color: 'white',
-    fontFamily: 'Lora_400Regular', 
+    fontFamily: 'Lora_400Regular', // Lora font for greeting [cite: 125]
     marginBottom: 10,
   },
   clockContainer: {
