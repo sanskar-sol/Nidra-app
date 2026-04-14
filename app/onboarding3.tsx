@@ -8,11 +8,11 @@ import {
   KeyboardAvoidingView, 
   Platform,
   StatusBar,
-  Alert,
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message'; // 1. Import Toast
 
 import { useFonts, Inter_400Regular, Inter_300Light } from '@expo-google-fonts/inter';
 import { Lora_500Medium } from '@expo-google-fonts/lora';
@@ -45,22 +45,63 @@ export default function OnboardingStep3() {
     const h = parseInt(hours, 10);
     const m = parseInt(minutes, 10);
 
-    // Validate Hours (e.g., between 1 and 24)
+    // 2. Error Toast for Hours
     if (!hours || isNaN(h) || h < 1 || h > 24) {
-      Alert.alert("Invalid Goal", "Please enter a valid number of hours (1-24).");
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Goal',
+        text2: 'Please enter a valid number of hours (1-24).',
+        position: 'top',
+      });
       return;
     }
     
-    // Validate Minutes (0 to 59)
+    // 3. Error Toast for Minutes
     if (!minutes || isNaN(m) || m < 0 || m > 59) {
-      Alert.alert("Invalid Goal", "Please enter valid minutes between 00 and 59.");
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Goal',
+        text2: 'Please enter valid minutes between 00 and 59.',
+        position: 'top',
+      });
       return;
     }
 
+    // Format minutes to ensure two digits in the message (e.g. '00')
+    const formattedMinute = m < 10 && minutes.length === 1 ? `0${m}` : minutes;
+
+    // 4. Personalized feedback based on their sleep goal
+    let toastTitle = "Setup Complete!";
+    let toastMessage = `Aiming for ${h} hrs and ${formattedMinute} min.`;
+
+    if (h < 6) {
+        toastTitle = "Ambitious goal! ⚡";
+        toastMessage = "Make sure to listen to your body if you need more rest.";
+    } else if (h >= 6 && h <= 7) {
+        toastTitle = "Solid target 🎯";
+        toastMessage = "Consistency is the key to waking up refreshed.";
+    } else if (h === 8) {
+        toastTitle = "The sweet spot 🏆";
+        toastMessage = "8 hours is the gold standard for recovery.";
+    } else if (h > 8) {
+        toastTitle = "Recovery mode 🛌";
+        toastMessage = "Love the commitment to deep rest and recovery!";
+    }
+
+    // 5. Success Toast
+    Toast.show({
+        type: 'success',
+        text1: toastTitle,
+        text2: toastMessage,
+        position: 'top',
+    });
+
     // In the future, save the sleep goal to your database or global state here
     
-    // Replace prevents the user from swiping back to the onboarding screens
-    router.replace('/home'); 
+    // 6. Delay the redirect so they can read the confirmation
+    setTimeout(() => {
+        router.replace('/home'); 
+    }, 1500);
   };
 
   return (
@@ -141,7 +182,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 30,
     justifyContent: 'center',
-    paddingVertical: 80, // Gives enough space so inputs don't get squished
+    paddingVertical: 80, 
   },
   backButton: {
     position: 'absolute',

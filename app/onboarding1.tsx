@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message'; // 1. Import Toast
 
 import { useFonts, Inter_400Regular, Inter_300Light } from '@expo-google-fonts/inter';
 import { Lora_500Medium } from '@expo-google-fonts/lora';
@@ -30,12 +31,30 @@ export default function OnboardingStep1() {
   }
 
   const handleNext = () => {
+    // 2. Replace alert() with an error Toast
     if (name.trim() === '') {
-      alert("Please enter your name to continue.");
+      Toast.show({
+        type: 'error',
+        text1: 'Name Required',
+        text2: 'Please enter your name to continue.',
+        position: 'top',
+      });
       return;
     }
-    // In the future, you will save 'name' to your database or global state here
-    router.push('/onboarding2'); 
+    
+    // 3. Add a welcoming success Toast
+    Toast.show({
+        type: 'success',
+        text1: `Nice to meet you, ${name.trim()}!`,
+        position: 'top',
+    });
+
+    // 4. In the future, you will save 'name' to your database or global state here
+    
+    // 5. Short delay before navigating so the user sees the greeting
+    setTimeout(() => {
+        router.push('/onboarding2'); 
+    }, 1200);
   };
 
   return (

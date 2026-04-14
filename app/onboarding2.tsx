@@ -8,11 +8,11 @@ import {
   KeyboardAvoidingView, 
   Platform,
   StatusBar,
-  Alert,
   ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message'; // 1. Import Toast
 
 import { useFonts, Inter_400Regular, Inter_300Light } from '@expo-google-fonts/inter';
 import { Lora_500Medium } from '@expo-google-fonts/lora';
@@ -46,20 +46,66 @@ export default function OnboardingStep2() {
     const h = parseInt(hour, 10);
     const m = parseInt(minute, 10);
 
-    // Validate Hour (1 to 12)
+    // 2. Replace Alert with error Toast for Hour
     if (!hour || isNaN(h) || h < 1 || h > 12) {
-      Alert.alert("Invalid Time", "Please enter a valid hour between 1 and 12.");
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Hour',
+        text2: 'Please enter a valid hour between 1 and 12.',
+        position: 'top',
+      });
       return;
     }
     
-    // Validate Minutes (0 to 59)
+    // 3. Replace Alert with error Toast for Minute
     if (!minute || isNaN(m) || m < 0 || m > 59) {
-      Alert.alert("Invalid Time", "Please enter valid minutes between 00 and 59.");
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid Minutes',
+        text2: 'Please enter valid minutes between 00 and 59.',
+        position: 'top',
+      });
       return;
     }
 
-    // In the future, save the wake-up time to your database or global state here
-    router.push('/onboarding3'); 
+    // Format minute to always show two digits in the message (e.g. '05' instead of '5')
+    const formattedMinute = m < 10 && minute.length === 1 ? `0${m}` : minute;
+
+    // 4. Personalized logic based on the chosen time
+    let toastTitle = "Time Set!";
+    let toastMessage = `We'll aim for ${h}:${formattedMinute} ${period}.`;
+
+    if (period === 'AM') {
+      if (h === 12 || h < 5) {
+        toastTitle = "Whoa, early riser! 🦉";
+        toastMessage = "That is seriously early. We'll make sure you're rested.";
+      } else if (h >= 5 && h <= 6) {
+        toastTitle = "Impressive! 🌅";
+        toastMessage = "Getting a head start on the day. Love the discipline!";
+      } else if (h >= 7 && h <= 9) {
+        toastTitle = "Classic routine ☕";
+        toastMessage = "A solid, standard start to your morning.";
+      } else if (h >= 10 && h <= 11) {
+        toastTitle = "Taking it easy ☀️";
+        toastMessage = "Enjoying that extra bit of rest, I see you.";
+      }
+    } else { // PM
+      toastTitle = "Night owl vibes 🌙";
+      toastMessage = "We'll optimize your sleep for a later schedule.";
+    }
+
+    // 5. Show the personalized success Toast
+    Toast.show({
+      type: 'success',
+      text1: toastTitle,
+      text2: toastMessage,
+      position: 'top',
+    });
+
+    // 6. Delay navigation slightly so they can read the fun message
+    setTimeout(() => {
+      router.push('/onboarding3'); 
+    }, 1500);
   };
 
   return (
@@ -153,7 +199,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 30,
     justifyContent: 'center',
-    paddingVertical: 80, // Gives enough space so inputs don't get squished by the keyboard
+    paddingVertical: 80, 
   },
   backButton: {
     position: 'absolute',

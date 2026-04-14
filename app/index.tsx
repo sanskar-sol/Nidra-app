@@ -19,7 +19,7 @@ export default function Index() {
                 type: 'error',
                 text1: 'Access Denied',
                 text2: 'Please enter both your email and password.',
-                position: 'bottom',
+                position: 'top',
             });
             return;
         }
@@ -29,7 +29,7 @@ export default function Index() {
             type: 'success',
             text1: 'Welcome back!',
             text2: 'Initiating sleep protocol...',
-            position: 'bottom',
+            position: 'top',
         });
 
         // 5. Slight delay so the user can actually read the success message before redirecting

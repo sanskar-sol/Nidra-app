@@ -3,8 +3,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message'; 
 
-// 1. Import fonts for consistent feel
+// Import fonts for consistent feel
 import { 
   useFonts, 
   Inter_400Regular, 
@@ -28,7 +29,7 @@ export default function Settings() {
 
   const [image, setImage] = useState<string | null>(null);
   
-  // 2. Separate states for each toggle to fix the "switch all" bug
+  // Separate states for each toggle
   const [notifications, setNotifications] = useState(true);
   const [strictMode, setStrictMode] = useState(false);
   const [sound, setSound] = useState(true);
@@ -44,7 +45,38 @@ export default function Settings() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
         setImage(result.assets[0].uri);
+        // Kept this Toast: Good for confirming a successful upload
+        Toast.show({
+          type: 'success',
+          text1: 'Profile Updated',
+          text2: 'Looking good! Your new avatar is set.',
+          position: 'top',
+        });
     }
+  };
+
+  const handleLogout = () => {
+    // Kept this Toast: Nice sign-off experience
+    Toast.show({
+      type: 'success',
+      text1: 'Logged Out',
+      text2: 'Sleep well. See you next time.',
+      position: 'top',
+    });
+
+    setTimeout(() => {
+      router.replace('/');
+    }, 1200);
+  };
+
+  const handleComingSoon = () => {
+    // Kept this Toast: Prevents the button from feeling broken
+    Toast.show({
+      type: 'success', 
+      text1: 'Coming Soon',
+      text2: 'This feature will be available in the next update.',
+      position: 'top',
+    });
   };
 
   if (!fontsLoaded) {
@@ -65,7 +97,6 @@ export default function Settings() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* 3. ScrollView with standard padding/top fix */}
       <ScrollView 
         contentContainerStyle={styles.scrollContainer} 
         showsVerticalScrollIndicator={false}
@@ -82,7 +113,7 @@ export default function Settings() {
         <View style={styles.profileBox}>
           <View>
             <Image
-              source={image ? { uri: image } : require('../assets/default-avatar.png')} // Replace with your local asset or a URL if you don't have this image locally
+              source={image ? { uri: image } : require('../assets/default-avatar.png')} 
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
@@ -93,7 +124,7 @@ export default function Settings() {
           <Text style={styles.email}>san@example.com</Text>
         </View>
 
-        {/* Sleep Profile Card - Added based on onboarding */}
+        {/* Sleep Profile Card */}
         <Text style={styles.heading}>Sleep Profile</Text>
         <View style={styles.card}>
           <TouchableOpacity onPress={() => router.push('/onboarding2')} style={styles.row}>
@@ -116,14 +147,17 @@ export default function Settings() {
         {/* Account Options Card */}
         <Text style={styles.heading}>Account</Text>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.row}>
+          <TouchableOpacity style={styles.row} onPress={handleComingSoon}>
             <Text style={styles.item}>Edit Profile Information</Text>
             <Ionicons name="chevron-forward" size={18} color="#aaa" />
           </TouchableOpacity>
 
           <View style={styles.row}>
             <Text style={styles.item}>Notifications</Text>
-            <ToggleSwitch value={notifications} onValueChange={() => setNotifications(!notifications)} />
+            <ToggleSwitch 
+              value={notifications} 
+              onValueChange={() => setNotifications(!notifications)} 
+            />
           </View>
 
           <View style={styles.row}>
@@ -134,25 +168,34 @@ export default function Settings() {
 
         <Text style={styles.heading}>Device Preferences</Text>
 
-        {/* Preferences Card - Each toggle fixed */}
+        {/* Preferences Card */}
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.item}>Enable Strict Mode</Text>
-            <ToggleSwitch value={strictMode} onValueChange={() => setStrictMode(!strictMode)} />
+            <ToggleSwitch 
+              value={strictMode} 
+              onValueChange={() => setStrictMode(!strictMode)} 
+            />
           </View>
 
           <View style={styles.row}>
             <Text style={styles.item}>Sound</Text>
-            <ToggleSwitch value={sound} onValueChange={() => setSound(!sound)} />
+            <ToggleSwitch 
+              value={sound} 
+              onValueChange={() => setSound(!sound)} 
+            />
           </View>
 
           <View style={styles.row}>
             <Text style={styles.item}>Vibration</Text>
-            <ToggleSwitch value={vibration} onValueChange={() => setVibration(!vibration)} />
+            <ToggleSwitch 
+              value={vibration} 
+              onValueChange={() => setVibration(!vibration)} 
+            />
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={() => router.replace('/')}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
         

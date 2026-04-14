@@ -10,28 +10,58 @@ import {
     ScrollView, 
     Platform 
 } from 'react-native';
-import { Link, useRouter } from 'expo-router'; // Added useRouter here
+import { Link, useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message'; // 1. Import Toast
 
 export default function Signup() {
+    // 2. Added state for email and username for validation
+    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const router = useRouter(); // Initialized the router
+    const router = useRouter(); 
 
     const handleSignup = () => {
+        // 3. Check if any fields are empty
+        if (!email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
+            Toast.show({
+                type: 'error',
+                text1: 'Missing Information',
+                text2: 'Please fill out all fields to register.',
+                position: 'top',
+            });
+            return;
+        }
+
+        // 4. Replace alert() with a custom error Toast
         if (password !== confirmPassword) {
-            alert("Passwords do not match!");
+            Toast.show({
+                type: 'error',
+                text1: 'Passwords Mismatch',
+                text2: 'Ensure both passwords are exactly the same.',
+                position: 'top',
+            });
             return;
         }
         
-        // Push the user to the onboarding screen
-        router.push('/onboarding1');
+        // 5. Success Toast
+        Toast.show({
+            type: 'success',
+            text1: 'Account Created',
+            text2: 'Let\'s set up your sleep profile...',
+            position: 'top',
+        });
+
+        // 6. Delay the redirect so the user sees the success message
+        setTimeout(() => {
+            router.push('/onboarding1');
+        }, 1500);
     };
 
     return (
-        /* Master wrapper to prevent the white flash at the bottom */
         <View style={styles.masterBackground}>
             <KeyboardAvoidingView 
                 style={styles.keyboardView} 
@@ -60,6 +90,10 @@ export default function Signup() {
                             <TextInput
                                 placeholder="Enter your email address"
                                 placeholderTextColor="#aaa"
+                                value={email} // Bound to state
+                                onChangeText={setEmail} // Bound to state
+                                autoCapitalize="none"
+                                keyboardType="email-address"
                                 style={styles.input}
                             />
                             <Ionicons name="mail-outline" size={18} color="#ccc" style={styles.icon} />
@@ -70,6 +104,9 @@ export default function Signup() {
                             <TextInput
                                 placeholder="Enter your username"
                                 placeholderTextColor="#aaa"
+                                value={username} // Bound to state
+                                onChangeText={setUsername} // Bound to state
+                                autoCapitalize="none"
                                 style={styles.input}
                             />
                             <Ionicons name="person-outline" size={18} color="#ccc" style={styles.icon} />
