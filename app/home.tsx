@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Pressable, ScrollView, Dimensions, StatusBar, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
+import { useRouter } from 'expo-router';
 
-// 1. Import Inter and Lora fonts with their specific weights
 import { 
   useFonts, 
   Inter_300Light, 
@@ -16,10 +16,11 @@ import {
 } from '@expo-google-fonts/lora';
 
 const { height } = Dimensions.get('window');
-const MOON_IMAGE_URL = 'https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?q=80&w=1968&auto=format&fit=crop';
 
 export default function Home() {
-  // 2. Load all the fonts
+  const router = useRouter();
+
+  // Load fonts
   let [fontsLoaded] = useFonts({
     Inter_300Light,
     Inter_400Regular,
@@ -28,7 +29,19 @@ export default function Home() {
     Lora_500Medium
   });
 
+  // Time state for the clock
   const [time, setTime] = useState(dayjs());
+
+  // NEW: State variables for Next Alarm and Sleep Goal 
+  const [nextAlarm, setNextAlarm] = useState({
+    time: '6:56',
+    period: 'am'
+  });
+
+  const [sleepGoal, setSleepGoal] = useState({
+    hours: '6',
+    minutes: '57'
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -42,19 +55,24 @@ export default function Home() {
     return <View style={styles.container} />; 
   }
 
+  // Dynamic Greeting Logic [cite: 136, 139]
+  const currentHour = time.hour();
+  let greetingMessage = "Good evening";
+
+  if (currentHour >= 5 && currentHour < 12) {
+    greetingMessage = "Good morning";
+  } else if (currentHour >= 12 && currentHour < 17) {
+    greetingMessage = "Good afternoon";
+  } else if (currentHour >= 17 && currentHour < 21) {
+    greetingMessage = "Good evening";
+  } else {
+    greetingMessage = "Good night";
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
-      <View style={styles.backgroundContainer}>
-        <Image 
-          source={{ uri: MOON_IMAGE_URL }} 
-          style={styles.moonImage}
-          resizeMode="cover"
-        />
-        <View style={styles.darkOverlay} />
-      </View>
-
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.contentContainer} 
@@ -64,13 +82,12 @@ export default function Home() {
         
         <View style={styles.header}>
           <Text style={styles.title}>निद्रा</Text>
-          <Pressable>
+          <Pressable onPress={() => router.push('/settings')}>
             <Ionicons name="settings-outline" size={30} color="white" />
           </Pressable>
         </View>
 
-        {/* Lora applied here */}
-        <Text style={styles.greeting}>Good evening , San</Text>
+        <Text style={styles.greeting}>{greetingMessage}, San</Text>
 
         <View style={styles.clockContainer}>
           <View style={styles.clockRow}>
@@ -84,19 +101,22 @@ export default function Home() {
         </View>
 
         <View style={styles.row}>
+          {/* Next Alarm Card using variables [cite: 144] */}
           <View style={styles.cardHalf}>
             <Text style={styles.cardSubtitle}>Next Alarm</Text>
             <View style={styles.timeValueRow}>
-              <Text style={styles.cardValueLarge}>6:56</Text>
-              <Text style={styles.cardValueSmall}>am</Text>
+              <Text style={styles.cardValueLarge}>{nextAlarm.time}</Text>
+              <Text style={styles.cardValueSmall}>{nextAlarm.period}</Text>
             </View>
           </View>
+
+          {/* Sleep Goal Card using variables [cite: 144] */}
           <View style={styles.cardHalf}>
             <Text style={styles.cardSubtitle}>Goal</Text>
             <View style={styles.timeValueRow}>
-              <Text style={styles.cardValueLarge}>6</Text>
+              <Text style={styles.cardValueLarge}>{sleepGoal.hours}</Text>
               <Text style={styles.cardValueSmall}>hrs</Text>
-              <Text style={[styles.cardValueLarge, { marginLeft: 8 }]}>57</Text>
+              <Text style={[styles.cardValueLarge, { marginLeft: 8 }]}>{sleepGoal.minutes}</Text>
               <Text style={styles.cardValueSmall}>min</Text>
             </View>
           </View>
@@ -105,7 +125,6 @@ export default function Home() {
         <Pressable style={styles.actionCard}>
           <View style={styles.actionCardContent}>
             <Text style={styles.actionCardSubtitle}>Initiate Protocol</Text>
-            {/* Lora applied here */}
             <Text style={styles.actionCardTitle}>Start Sleep Mode</Text>
           </View>
           <View style={styles.actionButton}>
@@ -123,22 +142,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1E1E1E',
-  },
-  backgroundContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: height * 0.55,
-  },
-  moonImage: {
-    width: '100%',
-    height: '100%',
-    opacity: 0.6,
-  },
-  darkOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(30, 30, 30, 0.4)',
   },
   scrollView: {
     flex: 1, 
@@ -158,13 +161,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontFamily: 'Inter_600SemiBold', // Replaced fontWeight with Inter
+    fontFamily: 'Inter_600SemiBold', 
     color: 'white',
   },
   greeting: {
     fontSize: 28,
     color: 'white',
-    fontFamily: 'Lora_400Regular', // Applied Lora
+    fontFamily: 'Lora_400Regular', 
     marginBottom: 10,
   },
   clockContainer: {
@@ -180,13 +183,13 @@ const styles = StyleSheet.create({
   mainClockText: {
     fontSize: 100,
     color: 'white',
-    fontFamily: 'Inter_300Light', // Applied Inter Light
+    fontFamily: 'Inter_300Light', 
     letterSpacing: 1,
   },
   ampmText: {
     fontSize: 24,
     color: 'white',
-    fontFamily: 'Inter_300Light', // Applied Inter Light
+    fontFamily: 'Inter_300Light', 
     marginLeft: 8, 
   },
   row: {
@@ -205,7 +208,7 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     color: '#B0B0B0',
     fontSize: 13,
-    fontFamily: 'Inter_400Regular', // Applied Inter
+    fontFamily: 'Inter_400Regular', 
     marginBottom: 8,
   },
   timeValueRow: {
@@ -215,12 +218,12 @@ const styles = StyleSheet.create({
   cardValueLarge: {
     color: 'white',
     fontSize: 30,
-    fontFamily: 'Inter_400Regular', // Applied Inter
+    fontFamily: 'Inter_400Regular', 
   },
   cardValueSmall: {
     color: '#B0B0B0',
     fontSize: 15,
-    fontFamily: 'Inter_400Regular', // Applied Inter
+    fontFamily: 'Inter_400Regular', 
     marginLeft: 4,
   },
   actionCard: {
@@ -241,13 +244,13 @@ const styles = StyleSheet.create({
   actionCardSubtitle: {
     color: '#C0C0C0',
     fontSize: 16,
-    fontFamily: 'Inter_400Regular', // Applied Inter
+    fontFamily: 'Inter_400Regular', 
     marginBottom: 6,
   },
   actionCardTitle: {
     color: 'white',
     fontSize: 28,
-    fontFamily: 'Lora_500Medium', // Applied Lora (Medium weight for better button hierarchy)
+    fontFamily: 'Lora_500Medium', 
   },
   actionButton: {
     width: 44,

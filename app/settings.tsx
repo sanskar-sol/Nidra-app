@@ -1,21 +1,39 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet, Switch, ImageBackground } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
+
+// 1. Import fonts for consistent feel
+import { 
+  useFonts, 
+  Inter_400Regular, 
+  Inter_600SemiBold 
+} from '@expo-google-fonts/inter';
+import { 
+  Lora_500Medium
+} from '@expo-google-fonts/lora';
+
+const { height } = Dimensions.get('window');
 
 export default function Settings() {
-
   const router = useRouter();
-  
+
+  // Load fonts
+  let [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_600SemiBold,
+    Lora_500Medium
+  });
 
   const [image, setImage] = useState<string | null>(null);
+  
+  // 2. Separate states for each toggle to fix the "switch all" bug
   const [notifications, setNotifications] = useState(true);
-  const [strictMode, setStrictMode] = useState(true);
+  const [strictMode, setStrictMode] = useState(false);
   const [sound, setSound] = useState(true);
   const [vibration, setVibration] = useState(true);
 
-  // 📸 Pick Image
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -29,222 +47,209 @@ export default function Settings() {
     }
   };
 
-  return (
-    <ImageBackground 
-        source={require('../assets/moon.jpg')} 
-        style={styles.container}
+  if (!fontsLoaded) {
+    return <View style={styles.container} />; 
+  }
+
+  // Helper component for the custom toggle switch
+  const ToggleSwitch = ({ value, onValueChange }: { value: boolean, onValueChange: () => void }) => (
+    <TouchableOpacity
+      onPress={onValueChange}
+      style={[styles.switchcontainer, { backgroundColor: value ? "#3b82f6" : "rgba(255,255,255,0.1)" }]}
     >
+      <View style={[styles.switchthumb, { alignSelf: value ? 'flex-end' : 'flex-start' }]} />
+    </TouchableOpacity>
+  );
+
+  return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      {/* 🔵 Top Section */}
-      <View style={styles.top}>
-        <TouchableOpacity 
-            onPress={() => router.back()}
-            style={{ padding: 10 }}
-        >
-            <Ionicons name='arrow-back' size={30} color="black" />
-        </TouchableOpacity>
-      </View> 
-      
-
-      {/* 👤 Profile */}
-      <View style={styles.profileBox}>
-        
-        <View>
-          <Image
-            source={
-              image
-                ? { uri: image }
-                : require('../assets/default-avatar.png')
-            }
-            style={styles.avatar}
-          />
-
-          <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
-            <Ionicons name="pencil" size={16} color="black" />
+      {/* 3. ScrollView with standard padding/top fix */}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer} 
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name='arrow-back' size={28} color="white" />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <View style={{ width: 28 }} /> 
         </View>
 
-        <Text style={styles.name}>Ann Kurian</Text>
-        <Text style={styles.email}>youremail@domain.com | +91 XXXXXXXX</Text>
-      </View>
+        {/* Profile Section */}
+        <View style={styles.profileBox}>
+          <View>
+            <Image
+              source={image ? { uri: image } : require('../assets/default-avatar.png')}
+              style={styles.avatar}
+            />
+            <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
+              <Ionicons name="pencil" size={14} color="black" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.name}>Ann Kurian</Text>
+          <Text style={styles.email}>ann.kurian@domain.com</Text>
+        </View>
 
-      {/* ⚙️ Options */}
-      <View style={styles.card}>
+        {/* Account Options Card */}
+        <View style={styles.card}>
+          <TouchableOpacity onPress={() => router.push('/edit')} style={styles.row}>
+            <Text style={styles.item}>Edit Profile Information</Text>
+            <Ionicons name="chevron-forward" size={18} color="#aaa" />
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/edit')}>
-          <Text style={styles.item}>Edit profile information</Text>
+          <View style={styles.row}>
+            <Text style={styles.item}>Notifications</Text>
+            <ToggleSwitch value={notifications} onValueChange={() => setNotifications(!notifications)} />
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.item}>Language</Text>
+            <Text style={styles.accentText}>English</Text>
+          </View>
+        </View>
+
+        <Text style={styles.heading}>Preferences</Text>
+
+        {/* Preferences Card - Each toggle fixed */}
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.item}>Enable Strict Mode</Text>
+            <ToggleSwitch value={strictMode} onValueChange={() => setStrictMode(!strictMode)} />
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.item}>Sound</Text>
+            <ToggleSwitch value={sound} onValueChange={() => setSound(!sound)} />
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.item}>Vibration</Text>
+            <ToggleSwitch value={vibration} onValueChange={() => setVibration(!vibration)} />
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.logoutButton}>
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-
-        <View style={styles.row}>
-          <Text style={styles.item}>Notifications</Text>
-          <TouchableOpacity
-  onPress={() => setNotifications(!notifications)}
-  style={[styles.switchcontainer, { backgroundColor: notifications ? "#4f7cff" : "#444" }]}
->
-  <View
-    style={[styles.switchthumb, { alignSelf: notifications ? 'flex-end' : 'flex-start' }]}
-  />
-</TouchableOpacity>
-        </View>
-      
-
-        <View style={styles.row}>
-          <Text style={styles.item}>Language</Text>
-          <Text style={{ color: '#4f7cff' }}>English</Text>
-        </View>
-
-      </View>
-
-      {/* ⚙️ Settings */}
-      <Text style={styles.heading}>Setting</Text>
-
-      <View style={styles.card}>
         
-        <View style={styles.row}>
-          <Text style={styles.item}>Enable Strict Mode</Text>
-          <TouchableOpacity
-  onPress={() => setNotifications(!notifications)}
-  style={[styles.switchcontainer, { backgroundColor: notifications ? "#4f7cff" : "#444" }]}
->
-  <View
-    style={[styles.switchthumb, { alignSelf: notifications ? 'flex-end' : 'flex-start' }]}
-  />
-</TouchableOpacity>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.item}>Sound</Text>
-          <TouchableOpacity
-  onPress={() => setNotifications(!notifications)}
-  style={[styles.switchcontainer, { backgroundColor: notifications ? "#4f7cff" : "#444" }]}
->
-  <View
-    style={[styles.switchthumb, { alignSelf: notifications ? 'flex-end' : 'flex-start' }]}
-  />
-</TouchableOpacity>
-        </View>
-
-        <View style={styles.row}>
-          <Text style={styles.item}>Vibration</Text>
-          <TouchableOpacity
-  onPress={() => setNotifications(!notifications)}
-  style={[styles.switchcontainer, { backgroundColor: notifications ? "#4f7cff" : "#444" }]}
->
-  <View
-    style={[styles.switchthumb, { alignSelf: notifications ? 'flex-end' : 'flex-start' }]}
-  />
-</TouchableOpacity>
-        </View>
-
-      </View>
-
-      {/* 🚪 Logout */}
-      <TouchableOpacity style={styles.logout}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
-
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </View>
-    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' },
-  top: {
-    height: 120,
-    backgroundColor: '#3b82f6',             // 👈 IMPORTANT
-  justifyContent: 'center',
-  paddingHorizontal: 15,
-  
+  container: { 
+    flex: 1, 
+    backgroundColor: '#1E1E1E' // Matching Home screen background [cite: 83]
   },
-  switchcontainer: {
-    width: 45,
-    height: 23,
-    borderRadius: 20,
-    justifyContent: 'center',
-    padding: 3,},
-
-switchthumb: {width: 20,
-      height: 20,
-      borderRadius: 10,
-      backgroundColor: "white",},
-
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontFamily: 'Lora_500Medium',
+  },
   profileBox: {
     alignItems: 'center',
-    marginTop: -50,
+    marginBottom: 30,
   },
-
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-
   editIcon: {
     position: 'absolute',
     bottom: 0,
     right: 0,
     backgroundColor: 'white',
     padding: 6,
-    borderRadius: 20,
+    borderRadius: 15,
   },
-
   name: {
     color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 10,
+    fontSize: 22,
+    fontFamily: 'Inter_400Regular', // Using Lora for the name [cite: 125]
+    marginTop: 15,
   },
-
   email: {
-    color: 'white',
-    fontSize: 12,
-  },
-
-  card: {
-    backgroundColor: 'transparent',
-    margin: 20,
-    padding: 15,
-    borderRadius: 10,
-    elevation: 3,
-    borderColor:'white',
-    borderWidth:1,
-  },
-
-  item: {
-    color: 'white',
+    color: '#aaa',
     fontSize: 14,
-    marginVertical: 10,
+    fontFamily: 'Inter_400Regular',
+    marginTop: 4,
   },
-
+  card: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)', // Frosted look matching other cards [cite: 84]
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 25,
+  },
+  heading: {
+    color: '#aaa',
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    marginLeft: 5,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 12,
   },
-
-  heading: {
+  item: {
     color: 'white',
-    marginLeft: 20,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Inter_400Regular',
   },
-
-  logout: {
-    margin: 20,
-    backgroundColor: '#3b82f6',
-    padding: 15,
+  accentText: {
+    color: '#3b82f6',
+    fontFamily: 'Inter_600SemiBold',
+  },
+  switchcontainer: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    padding: 2,
+  },
+  switchthumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "white",
+  },
+  logoutButton: {
+    backgroundColor: 'rgba(255, 59, 48, 0.1)', // Subtle red for logout
+    padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#3b82f6',
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 59, 48, 0.2)',
   },
-
   logoutText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#ff3b30',
+    fontFamily: 'Inter_600SemiBold',
     fontSize: 16,
   },
 });
