@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 
-// Imports for Inter and Lora fonts [cite: 125]
+// Imports for Inter and Lora fonts [cite: 5, 6]
 import { 
   useFonts, 
   Inter_300Light, 
@@ -19,9 +19,9 @@ import {
 const { height } = Dimensions.get('window');
 
 export default function Home() {
-  const router = useRouter();
+  const router = useRouter(); // [cite: 7, 164]
 
-  // Load fonts for consistent UI feel [cite: 125, 162]
+  // Load fonts for consistent UI feel [cite: 7, 162]
   let [fontsLoaded] = useFonts({
     Inter_300Light,
     Inter_400Regular,
@@ -30,16 +30,16 @@ export default function Home() {
     Lora_500Medium
   });
 
-  // Time state for the live clock [cite: 135]
+  // Time state for the live clock [cite: 8]
   const [time, setTime] = useState(dayjs());
 
-  // Variables for Next Alarm and Sleep Goal [cite: 149]
+  // Variables for Next Alarm and Sleep Goal [cite: 9, 10]
   const [nextAlarm] = useState({ time: '6:56', period: 'am' });
   const [sleepGoal] = useState({ hours: '6', minutes: '57' });
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTime(dayjs()); // Updates time every second [cite: 140]
+      setTime(dayjs()); // Updates time every second [cite: 10]
     }, 1000);
 
     return () => clearInterval(timer);
@@ -49,7 +49,7 @@ export default function Home() {
     return <View style={styles.container} />; 
   }
 
-  // Logic to determine the greeting and emoji based on the current hour [cite: 136, 138, 139]
+  // Logic to determine the greeting and emoji based on the current hour [cite: 12, 172, 173]
   const currentHour = time.hour(); 
   let greetingMessage = "Good evening 🌆";
 
@@ -80,7 +80,7 @@ export default function Home() {
           </Pressable>
         </View>
 
-        {/* Dynamic greeting with simple emojis [cite: 139] */}
+        {/* Dynamic greeting with simple emojis [cite: 18, 203, 204] */}
         <Text style={styles.greeting}>{greetingMessage}, San</Text>
 
         <View style={styles.clockContainer}>
@@ -114,7 +114,11 @@ export default function Home() {
           </View>
         </View>
 
-        <Pressable style={styles.actionCard}>
+        {/* Re-directed to /sleepmode1  */}
+        <Pressable 
+          style={styles.actionCard} 
+          onPress={() => router.push('/sleepmode1')}
+        >
           <View style={styles.actionCardContent}>
             <Text style={styles.actionCardSubtitle}>Initiate Protocol</Text>
             <Text style={styles.actionCardTitle}>Start Sleep Mode</Text>
@@ -133,7 +137,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1E1E1E', // Solid dark background [cite: 131]
+    backgroundColor: '#1E1E1E', // Solid dark background [cite: 22]
   },
   scrollView: {
     flex: 1, 
@@ -159,7 +163,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 28,
     color: 'white',
-    fontFamily: 'Lora_400Regular', // Lora font for greeting [cite: 125]
+    fontFamily: 'Lora_400Regular', // Lora font for greeting [cite: 23]
     marginBottom: 10,
   },
   clockContainer: {

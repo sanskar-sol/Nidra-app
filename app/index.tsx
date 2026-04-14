@@ -2,13 +2,40 @@ import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link, useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message'; // 1. Import Toast
 
 export default function Index() {
+    // 2. Added state for email and password to handle validation
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    
     const router = useRouter();
 
     const handleLogin = () => {
-        router.push('/home');  
+        // 3. Validation: Check if fields are empty
+        if (!email.trim() || !password.trim()) {
+            Toast.show({
+                type: 'error',
+                text1: 'Access Denied',
+                text2: 'Please enter both your email and password.',
+                position: 'bottom',
+            });
+            return;
+        }
+
+        // 4. Success Toast
+        Toast.show({
+            type: 'success',
+            text1: 'Welcome back!',
+            text2: 'Initiating sleep protocol...',
+            position: 'bottom',
+        });
+
+        // 5. Slight delay so the user can actually read the success message before redirecting
+        setTimeout(() => {
+            router.push('/home');  
+        }, 1500);
     };
 
     return (
@@ -30,6 +57,10 @@ export default function Index() {
                     <TextInput
                         placeholder="Enter your email address"
                         placeholderTextColor="#aaa"
+                        value={email} // Bound to state
+                        onChangeText={setEmail} // Bound to state
+                        autoCapitalize="none"
+                        keyboardType="email-address"
                         style={styles.input}
                     />
                     <Ionicons name="mail-outline" size={18} color="#ccc" style={styles.icon} />
@@ -41,6 +72,8 @@ export default function Index() {
                         placeholder="Enter your password"
                         placeholderTextColor="#aaa"
                         secureTextEntry={!showPassword}
+                        value={password} // Bound to state
+                        onChangeText={setPassword} // Bound to state
                         style={styles.input}
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -75,10 +108,11 @@ export default function Index() {
         </View>    
     );
 }
+
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    backgroundColor: '#262625', // Your new solid background color
+    backgroundColor: '#262625', 
     justifyContent: 'center',
     paddingHorizontal: 30,
   },
@@ -129,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)', // Dropped the opacity slightly so it blends nicely with the dark grey
+    borderColor: 'rgba(255,255,255,0.2)', 
     marginBottom: 15,
   },
   form: {
@@ -150,7 +184,7 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   socialIcon: {
-    backgroundColor: 'rgba(255,255,255,0.05)', // Made slightly more transparent to look better on solid grey
+    backgroundColor: 'rgba(255,255,255,0.05)', 
     borderRadius: 50,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',

@@ -82,20 +82,41 @@ export default function Settings() {
         <View style={styles.profileBox}>
           <View>
             <Image
-              source={image ? { uri: image } : require('../assets/default-avatar.png')}
+              source={image ? { uri: image } : require('../assets/default-avatar.png')} // Replace with your local asset or a URL if you don't have this image locally
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.editIcon} onPress={pickImage}>
               <Ionicons name="pencil" size={14} color="black" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.name}>Ann Kurian</Text>
-          <Text style={styles.email}>ann.kurian@domain.com</Text>
+          <Text style={styles.name}>San</Text>
+          <Text style={styles.email}>san@example.com</Text>
+        </View>
+
+        {/* Sleep Profile Card - Added based on onboarding */}
+        <Text style={styles.heading}>Sleep Profile</Text>
+        <View style={styles.card}>
+          <TouchableOpacity onPress={() => router.push('/onboarding2')} style={styles.row}>
+            <Text style={styles.item}>Wake-up Time</Text>
+            <View style={styles.rightContent}>
+              <Text style={styles.valueText}>06:30 AM</Text>
+              <Ionicons name="chevron-forward" size={18} color="#aaa" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push('/onboarding3')} style={styles.row}>
+            <Text style={styles.item}>Sleep Goal</Text>
+            <View style={styles.rightContent}>
+              <Text style={styles.valueText}>8 hrs</Text>
+              <Ionicons name="chevron-forward" size={18} color="#aaa" />
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Account Options Card */}
+        <Text style={styles.heading}>Account</Text>
         <View style={styles.card}>
-          <TouchableOpacity onPress={() => router.push('/edit')} style={styles.row}>
+          <TouchableOpacity style={styles.row}>
             <Text style={styles.item}>Edit Profile Information</Text>
             <Ionicons name="chevron-forward" size={18} color="#aaa" />
           </TouchableOpacity>
@@ -111,7 +132,7 @@ export default function Settings() {
           </View>
         </View>
 
-        <Text style={styles.heading}>Preferences</Text>
+        <Text style={styles.heading}>Device Preferences</Text>
 
         {/* Preferences Card - Each toggle fixed */}
         <View style={styles.card}>
@@ -131,7 +152,7 @@ export default function Settings() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => router.replace('/')}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
         
@@ -144,7 +165,7 @@ export default function Settings() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#1E1E1E' // Matching Home screen background [cite: 83]
+    backgroundColor: '#1E1E1E' 
   },
   scrollContainer: {
     flexGrow: 1,
@@ -184,7 +205,7 @@ const styles = StyleSheet.create({
   name: {
     color: 'white',
     fontSize: 22,
-    fontFamily: 'Inter_400Regular', // Using Lora for the name [cite: 125]
+    fontFamily: 'Inter_400Regular', 
     marginTop: 15,
   },
   email: {
@@ -194,7 +215,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)', // Frosted look matching other cards [cite: 84]
+    backgroundColor: 'rgba(255, 255, 255, 0.08)', 
     borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -221,6 +242,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter_400Regular',
   },
+  rightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  valueText: {
+    color: '#B0B0B0',
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+  },
   accentText: {
     color: '#3b82f6',
     fontFamily: 'Inter_600SemiBold',
@@ -239,7 +270,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   logoutButton: {
-    backgroundColor: 'rgba(255, 59, 48, 0.1)', // Subtle red for logout
+    backgroundColor: 'rgba(255, 59, 48, 0.1)', 
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',

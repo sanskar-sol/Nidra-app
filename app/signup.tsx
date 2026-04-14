@@ -10,7 +10,7 @@ import {
     ScrollView, 
     Platform 
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router'; // Added useRouter here
 
 export default function Signup() {
     const [password, setPassword] = useState('');
@@ -18,11 +18,16 @@ export default function Signup() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    const router = useRouter(); // Initialized the router
+
     const handleSignup = () => {
         if (password !== confirmPassword) {
             alert("Passwords do not match!");
             return;
         }
+        
+        // Push the user to the onboarding screen
+        router.push('/onboarding1');
     };
 
     return (
@@ -117,10 +122,11 @@ export default function Signup() {
         </View>
     );
 }
+
 const styles = StyleSheet.create({
   masterBackground: {
     flex: 1,
-    backgroundColor: '#262625', // This acts as the base coat to hide any white gaps
+    backgroundColor: '#262625', 
   },
   keyboardView: {
     flex: 1,
