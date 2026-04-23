@@ -13,25 +13,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; // 1. Import Toast
-
-import { useFonts, Inter_400Regular, Inter_300Light } from '@expo-google-fonts/inter';
-import { Lora_500Medium } from '@expo-google-fonts/lora';
+import { useStore } from '../store/useStore';
 
 export default function OnboardingStep2() {
   const router = useRouter();
   const [hour, setHour] = useState('');
   const [minute, setMinute] = useState('');
   const [period, setPeriod] = useState('AM');
-
-  let [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_300Light,
-    Lora_500Medium
-  });
-
-  if (!fontsLoaded) {
-    return <View style={styles.container} />;
-  }
+  const setWakeUpTime = useStore((state) => state.setWakeUpTime);
 
   // Handle input to ensure only numbers are typed
   const handleHourChange = (text: string) => {
@@ -102,6 +91,8 @@ export default function OnboardingStep2() {
       position: 'top',
     });
 
+    setWakeUpTime(String(h).padStart(2, '0'), String(m).padStart(2, '0'), period);
+
     // 6. Delay navigation slightly so they can read the fun message
     setTimeout(() => {
       router.push('/onboarding3'); 
@@ -130,8 +121,8 @@ export default function OnboardingStep2() {
           <View style={styles.textContainer}>
             <Text style={styles.subtitle}>Step 2 of 3</Text>
             <Text style={styles.title}>When do you need to wake up?</Text>
-            <Text style={styles.description}>
-              We'll use this to set your next alarm and calculate your optimal sleep window.
+          <Text style={styles.description}>
+              We&apos;ll use this to set your next alarm and calculate your optimal sleep window.
             </Text>
           </View>
 

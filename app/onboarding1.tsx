@@ -12,23 +12,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; // 1. Import Toast
-
-import { useFonts, Inter_400Regular, Inter_300Light } from '@expo-google-fonts/inter';
-import { Lora_500Medium } from '@expo-google-fonts/lora';
+import { useStore } from '../store/useStore';
 
 export default function OnboardingStep1() {
   const router = useRouter();
   const [name, setName] = useState('');
-
-  let [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_300Light,
-    Lora_500Medium
-  });
-
-  if (!fontsLoaded) {
-    return <View style={styles.container} />;
-  }
+  const updateUser = useStore((state) => state.updateUser);
 
   const handleNext = () => {
     // 2. Replace alert() with an error Toast
@@ -49,7 +38,7 @@ export default function OnboardingStep1() {
         position: 'top',
     });
 
-    // 4. In the future, you will save 'name' to your database or global state here
+    updateUser({ name: name.trim() });
     
     // 5. Short delay before navigating so the user sees the greeting
     setTimeout(() => {

@@ -2,33 +2,39 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, Pressable, Dimensions, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import dayjs from 'dayjs';
+import Toast from 'react-native-toast-message';
+import { useStore } from '../store/useStore';
 
-// Reusing your font setup for consistency [cite: 125, 162]
-import { 
-  useFonts, 
-  Inter_400Regular, 
-  Inter_300Light 
-} from '@expo-google-fonts/inter';
-import { 
-  Lora_400Regular,
-  Lora_500Medium
-} from '@expo-google-fonts/lora';
-
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function SleepMode() {
   const router = useRouter();
+  const user = useStore((state) => state.user);
+  const activeSleepSession = useStore((state) => state.activeSleepSession);
+  const registerSnooze = useStore((state) => state.registerSnooze);
+  const displayName = user?.name?.trim() || user?.email?.split('@')[0] || 'Sleeper';
+  const snoozeModeLabel = activeSleepSession?.mode === 'strict' ? 'Strict snooze: 3 min, one use' : 'Forgiving snooze: 10 min';
 
-  let [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_300Light,
-    Lora_400Regular,
-    Lora_500Medium
-  });
+  const handleSnooze = () => {
+    const result = registerSnooze();
+    if (!result.allowed) {
+      Toast.show({
+        type: 'error',
+        text1: 'Snooze Locked',
+        text2: 'No snoozes left in strict responsibility mode.',
+        position: 'top',
+      });
+      return;
+    }
 
-  if (!fontsLoaded) {
-    return <View style={styles.container} />;
-  }
+    Toast.show({
+      type: 'success',
+      text1: `Snoozed ${result.intervalMinutes} min`,
+      text2: `Remaining snoozes: ${result.remaining}.`,
+      position: 'top',
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -58,7 +64,7 @@ export default function SleepMode() {
         {/* Message Section */}
         <View style={styles.messageContainer}>
           <Text style={styles.protocolText}>Protocol Initiated</Text>
-          <Text style={styles.mainTitle}>Sleep Carefree, San.</Text>
+          <Text style={styles.mainTitle}>Sleep Carefree, {displayName}.</Text>
           <Text style={styles.description}>
             Your environment is optimized. We’ll take care of the rest while you rest.
           </Text>
@@ -70,6 +76,13 @@ export default function SleepMode() {
             <Ionicons name="moon" size={16} color="#B0B0B0" />
             <Text style={styles.statusText}>Deep Sleep Mode Active</Text>
           </View>
+          <Text style={styles.snoozeMeta}>{snoozeModeLabel}</Text>
+          <Text style={styles.alarmMeta}>
+            Alarm: {activeSleepSession ? dayjs(activeSleepSession.actualAlarmTimeISO).format('h:mm A') : 'Not set'}
+          </Text>
+          <Pressable style={styles.snoozeButton} onPress={handleSnooze}>
+            <Text style={styles.snoozeButtonText}>Snooze Alarm</Text>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -158,5 +171,31 @@ const styles = StyleSheet.create({
     color: '#B0B0B0',
     fontFamily: 'Inter_400Regular',
     fontSize: 12,
+  },
+  snoozeMeta: {
+    color: '#9CA3AF',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 12,
+    marginTop: 10,
+  },
+  alarmMeta: {
+    color: 'white',
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  snoozeButton: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  snoozeButtonText: {
+    color: 'white',
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
   },
 });

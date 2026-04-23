@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; // 1. Import Toast
+import { useStore } from '../store/useStore';
 
 export default function Index() {
     // 2. Added state for email and password to handle validation
@@ -11,6 +12,7 @@ export default function Index() {
     const [showPassword, setShowPassword] = useState(false);
     
     const router = useRouter();
+    const loginUser = useStore((state) => state.loginUser);
 
     const handleLogin = () => {
         // 3. Validation: Check if fields are empty
@@ -31,6 +33,8 @@ export default function Index() {
             text2: 'Initiating sleep protocol...',
             position: 'top',
         });
+
+        loginUser(email.trim());
 
         // 5. Slight delay so the user can actually read the success message before redirecting
         setTimeout(() => {

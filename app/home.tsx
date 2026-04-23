@@ -3,23 +3,15 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, StatusBar, P
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message';
+import { useStore } from '../store/useStore';
+import { getLatestBedtime, isFriday } from '../store/sleepMath';
 
 // Victory Native (Skia-based)
 import { CartesianChart, Line, Area } from "victory-native";
 import { Circle, LinearGradient, vec } from "@shopify/react-native-skia";
 
-import { 
-  useFonts, 
-  Inter_300Light, 
-  Inter_400Regular, 
-  Inter_600SemiBold 
-} from '@expo-google-fonts/inter';
-import { 
-  Lora_400Regular,
-  Lora_500Medium
-} from '@expo-google-fonts/lora';
-
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 const SLEEP_DATA = [
   { day: 0, hours: 6.5 },
@@ -35,25 +27,18 @@ const CHART_GREEN = "#22c55e";
 
 export default function Home() {
   const router = useRouter(); 
-
-  let [fontsLoaded] = useFonts({
-    Inter_300Light,
-    Inter_400Regular,
-    Inter_600SemiBold,
-    Lora_400Regular,
-    Lora_500Medium
-  });
+  const user = useStore((state) => state.user);
+  const sleepGoals = useStore((state) => state.sleepGoals);
+  const sleepDebtMinutes = useStore((state) => state.sleepDebtMinutes);
+  const startSleepMode = useStore((state) => state.startSleepMode);
+  const pointOfNoReturnTriggerISO = useStore((state) => state.pointOfNoReturnTriggerISO);
 
   const [time, setTime] = useState(dayjs());
-  const [nextAlarm] = useState({ time: '6:56', period: 'am' });
-  const [sleepGoal] = useState({ hours: '6', minutes: '57' });
 
   useEffect(() => {
     const timer = setInterval(() => setTime(dayjs()), 1000);
     return () => clearInterval(timer);
   }, []);
-
-  if (!fontsLoaded) return <View style={styles.container} />;
 
   const currentHour = time.hour(); 
   let greetingMessage = "Good evening 🌆";
@@ -61,6 +46,44 @@ export default function Home() {
   else if (currentHour >= 12 && currentHour < 17) greetingMessage = "Good afternoon ☀️";
   else if (currentHour >= 17 && currentHour < 21) greetingMessage = "Good evening 🌆";
   else greetingMessage = "Good night 🌙";
+
+  const displayName = user?.name?.trim() || user?.email?.split('@')[0] || 'Sleeper';
+  const nextAlarm = {
+    time: `${sleepGoals.wakeUpHour}:${sleepGoals.wakeUpMinute}`,
+    period: sleepGoals.wakeUpPeriod.toLowerCase(),
+  };
+  const sleepGoal = {
+    hours: sleepGoals.goalHours,
+    minutes: sleepGoals.goalMinutes,
+  };
+  const latestBedtime = getLatestBedtime(
+    {
+      hour: sleepGoals.wakeUpHour,
+      minute: sleepGoals.wakeUpMinute,
+      period: sleepGoals.wakeUpPeriod,
+    },
+    (Number.parseInt(sleepGoals.goalHours, 10) || 0) * 60 + (Number.parseInt(sleepGoals.goalMinutes, 10) || 0),
+  );
+
+  const showPointOfNoReturnNotice = (() => {
+    if (!pointOfNoReturnTriggerISO) return false;
+    const triggerTs = Date.parse(pointOfNoReturnTriggerISO);
+    if (Number.isNaN(triggerTs)) return false;
+    const nowTs = Date.now();
+    return nowTs >= triggerTs && nowTs <= triggerTs + 30 * 60 * 1000;
+  })();
+
+  const handleStartSleepMode = () => {
+    const session = startSleepMode();
+    const isStrict = session.mode === 'strict';
+    Toast.show({
+      type: isStrict ? 'error' : 'success',
+      text1: isStrict ? 'Strict Wake Window Applied' : 'Full Sleep Window Available',
+      text2: `Alarm set for ${dayjs(session.actualAlarmTimeISO).format('h:mm A')}.`,
+      position: 'top',
+    });
+    router.push('/sleepmode1');
+  };
 
   return (
     <View style={styles.container}>
@@ -79,7 +102,7 @@ export default function Home() {
           </Pressable>
         </View>
 
-        <Text style={styles.greeting}>{greetingMessage}, San</Text>
+        <Text style={styles.greeting}>{greetingMessage}, {displayName}</Text>
 
         <View style={styles.clockContainer}>
           <View style={styles.clockRow}>
@@ -105,6 +128,31 @@ export default function Home() {
               <Text style={styles.cardValueSmall}>min</Text>
             </View>
           </View>
+        </View>
+
+        {showPointOfNoReturnNotice && (
+          <View style={styles.noticeCard}>
+            <Ionicons name="alert-circle" size={20} color="#facc15" />
+            <Text style={styles.noticeText}>
+              You have 30 minutes to go to sleep if you want to hit your full goal tomorrow.
+            </Text>
+          </View>
+        )}
+
+        {isFriday(new Date()) && sleepDebtMinutes > 0 && (
+          <View style={styles.noticeCard}>
+            <Ionicons name="moon" size={20} color="#93c5fd" />
+            <Text style={styles.noticeText}>
+              Friday recovery tip: sleep debt is {sleepDebtMinutes} min. Try going to bed earlier tonight.
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.noticeCard}>
+          <Ionicons name="time" size={20} color="#a7f3d0" />
+          <Text style={styles.noticeText}>
+            Latest full-goal bedtime: {latestBedtime.hour}:{latestBedtime.minute} {latestBedtime.period}
+          </Text>
         </View>
 
         {/* ── SLEEP ACTIVITY GRAPH ── */}
@@ -190,7 +238,7 @@ export default function Home() {
 
         <Pressable 
           style={styles.actionCard} 
-          onPress={() => router.push('/sleepmode1')}
+          onPress={handleStartSleepMode}
         >
           <View style={styles.actionCardContent}>
             <Text style={styles.actionCardSubtitle}>Initiate Protocol</Text>
@@ -288,5 +336,22 @@ const styles = StyleSheet.create({
     borderColor: 'white',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  noticeCard: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  noticeText: {
+    color: '#D4D4D4',
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    flex: 1,
   },
 });

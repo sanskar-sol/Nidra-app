@@ -1,39 +1,19 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions, StatusBar, Platform } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, StatusBar, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; 
-
-// Import fonts for consistent feel
-import { 
-  useFonts, 
-  Inter_400Regular, 
-  Inter_600SemiBold 
-} from '@expo-google-fonts/inter';
-import { 
-  Lora_500Medium
-} from '@expo-google-fonts/lora';
-
-const { height } = Dimensions.get('window');
+import { useStore } from '../store/useStore';
 
 export default function Settings() {
   const router = useRouter();
-
-  // Load fonts
-  let [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_600SemiBold,
-    Lora_500Medium
-  });
-
   const [image, setImage] = useState<string | null>(null);
-  
-  // Separate states for each toggle
-  const [notifications, setNotifications] = useState(true);
-  const [strictMode, setStrictMode] = useState(false);
-  const [sound, setSound] = useState(true);
-  const [vibration, setVibration] = useState(true);
+  const user = useStore((state) => state.user);
+  const sleepGoals = useStore((state) => state.sleepGoals);
+  const preferences = useStore((state) => state.preferences);
+  const updatePreferences = useStore((state) => state.updatePreferences);
+  const logoutUser = useStore((state) => state.logoutUser);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -64,6 +44,8 @@ export default function Settings() {
       position: 'top',
     });
 
+    logoutUser();
+
     setTimeout(() => {
       router.replace('/');
     }, 1200);
@@ -79,10 +61,6 @@ export default function Settings() {
     });
   };
 
-  if (!fontsLoaded) {
-    return <View style={styles.container} />; 
-  }
-
   // Helper component for the custom toggle switch
   const ToggleSwitch = ({ value, onValueChange }: { value: boolean, onValueChange: () => void }) => (
     <TouchableOpacity
@@ -92,6 +70,11 @@ export default function Settings() {
       <View style={[styles.switchthumb, { alignSelf: value ? 'flex-end' : 'flex-start' }]} />
     </TouchableOpacity>
   );
+
+  const displayName = user?.name?.trim() || 'Dreamer';
+  const displayEmail = user?.email?.trim() || 'No email saved';
+  const wakeUpTime = `${sleepGoals.wakeUpHour}:${sleepGoals.wakeUpMinute} ${sleepGoals.wakeUpPeriod}`;
+  const sleepGoalLabel = `${sleepGoals.goalHours} hrs ${sleepGoals.goalMinutes} min`;
 
   return (
     <View style={styles.container}>
@@ -120,8 +103,8 @@ export default function Settings() {
               <Ionicons name="pencil" size={14} color="black" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.name}>San</Text>
-          <Text style={styles.email}>san@example.com</Text>
+          <Text style={styles.name}>{displayName}</Text>
+          <Text style={styles.email}>{displayEmail}</Text>
         </View>
 
         {/* Sleep Profile Card */}
@@ -130,7 +113,7 @@ export default function Settings() {
           <TouchableOpacity onPress={() => router.push('/onboarding2')} style={styles.row}>
             <Text style={styles.item}>Wake-up Time</Text>
             <View style={styles.rightContent}>
-              <Text style={styles.valueText}>06:30 AM</Text>
+              <Text style={styles.valueText}>{wakeUpTime}</Text>
               <Ionicons name="chevron-forward" size={18} color="#aaa" />
             </View>
           </TouchableOpacity>
@@ -138,7 +121,7 @@ export default function Settings() {
           <TouchableOpacity onPress={() => router.push('/onboarding3')} style={styles.row}>
             <Text style={styles.item}>Sleep Goal</Text>
             <View style={styles.rightContent}>
-              <Text style={styles.valueText}>8 hrs</Text>
+              <Text style={styles.valueText}>{sleepGoalLabel}</Text>
               <Ionicons name="chevron-forward" size={18} color="#aaa" />
             </View>
           </TouchableOpacity>
@@ -155,8 +138,8 @@ export default function Settings() {
           <View style={styles.row}>
             <Text style={styles.item}>Notifications</Text>
             <ToggleSwitch 
-              value={notifications} 
-              onValueChange={() => setNotifications(!notifications)} 
+              value={preferences.notifications} 
+              onValueChange={() => updatePreferences({ notifications: !preferences.notifications })} 
             />
           </View>
 
@@ -173,26 +156,31 @@ export default function Settings() {
           <View style={styles.row}>
             <Text style={styles.item}>Enable Strict Mode</Text>
             <ToggleSwitch 
-              value={strictMode} 
-              onValueChange={() => setStrictMode(!strictMode)} 
+              value={preferences.strictMode} 
+              onValueChange={() => updatePreferences({ strictMode: !preferences.strictMode })} 
             />
           </View>
 
           <View style={styles.row}>
             <Text style={styles.item}>Sound</Text>
             <ToggleSwitch 
-              value={sound} 
-              onValueChange={() => setSound(!sound)} 
+              value={preferences.sound} 
+              onValueChange={() => updatePreferences({ sound: !preferences.sound })} 
             />
           </View>
 
           <View style={styles.row}>
             <Text style={styles.item}>Vibration</Text>
             <ToggleSwitch 
-              value={vibration} 
-              onValueChange={() => setVibration(!vibration)} 
+              value={preferences.vibration} 
+              onValueChange={() => updatePreferences({ vibration: !preferences.vibration })} 
             />
           </View>
+
+          <TouchableOpacity style={styles.row} onPress={() => router.push('/test-blocker')}>
+            <Text style={styles.debugItem}>Sleep Blocker Diagnostics</Text>
+            <Ionicons name="chevron-forward" size={18} color="#666" />
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -283,6 +271,11 @@ const styles = StyleSheet.create({
   item: {
     color: 'white',
     fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+  },
+  debugItem: {
+    color: '#9CA3AF',
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
   },
   rightContent: {

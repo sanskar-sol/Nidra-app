@@ -13,24 +13,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; // 1. Import Toast
-
-import { useFonts, Inter_400Regular, Inter_300Light } from '@expo-google-fonts/inter';
-import { Lora_500Medium } from '@expo-google-fonts/lora';
+import { useStore } from '../store/useStore';
 
 export default function OnboardingStep3() {
   const router = useRouter();
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
-
-  let [fontsLoaded] = useFonts({
-    Inter_400Regular,
-    Inter_300Light,
-    Lora_500Medium
-  });
-
-  if (!fontsLoaded) {
-    return <View style={styles.container} />;
-  }
+  const setSleepGoal = useStore((state) => state.setSleepGoal);
 
   // Handle input to ensure only numbers are typed
   const handleHourChange = (text: string) => {
@@ -96,7 +85,7 @@ export default function OnboardingStep3() {
         position: 'top',
     });
 
-    // In the future, save the sleep goal to your database or global state here
+    setSleepGoal(String(h), String(m).padStart(2, '0'));
     
     // 6. Delay the redirect so they can read the confirmation
     setTimeout(() => {

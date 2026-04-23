@@ -2,6 +2,8 @@ import { Stack } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFonts, Inter_300Light, Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
+import { Lora_400Regular, Lora_500Medium } from '@expo-google-fonts/lora';
 
 // 1. Define your custom toast layouts
 const toastConfig = {
@@ -29,6 +31,18 @@ const toastConfig = {
 };
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Inter_300Light,
+    Inter_400Regular,
+    Inter_600SemiBold,
+    Lora_400Regular,
+    Lora_500Medium,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <>
       <Stack screenOptions={{ headerShown: false }} />

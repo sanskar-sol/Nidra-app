@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; // 1. Import Toast
+import { useStore } from '../store/useStore';
 
 export default function Signup() {
     // 2. Added state for email and username for validation
@@ -23,6 +24,7 @@ export default function Signup() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const router = useRouter(); 
+    const loginUser = useStore((state) => state.loginUser);
 
     const handleSignup = () => {
         // 3. Check if any fields are empty
@@ -54,6 +56,8 @@ export default function Signup() {
             text2: 'Let\'s set up your sleep profile...',
             position: 'top',
         });
+
+        loginUser(email.trim());
 
         // 6. Delay the redirect so the user sees the success message
         setTimeout(() => {
