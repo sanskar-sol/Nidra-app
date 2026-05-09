@@ -23,8 +23,9 @@
       "package": "com.anonymous.Nidra",
       "permissions": [
         "SYSTEM_ALERT_WINDOW",
-        "PACKAGE_USAGE_STATS",
-        "FOREGROUND_SERVICE"
+        "FOREGROUND_SERVICE",
+        "QUERY_ALL_PACKAGES",
+        "SCHEDULE_EXACT_ALARM"
       ]
     },
     "web": {
@@ -45,7 +46,8 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -12,14 +12,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import Toast from 'react-native-toast-message'; // 1. Import Toast
-import { useStore } from '../store/useStore';
+import Toast from 'react-native-toast-message'; 
+import { useStore, StoreState } from '../store/useStore';
 
 export default function OnboardingStep3() {
   const router = useRouter();
   const [hours, setHours] = useState('');
   const [minutes, setMinutes] = useState('');
-  const setSleepGoal = useStore((state) => state.setSleepGoal);
+  const setSleepGoal = useStore((state: StoreState) => state.setSleepGoal);
 
   // Handle input to ensure only numbers are typed
   const handleHourChange = (text: string) => {
@@ -86,10 +86,10 @@ export default function OnboardingStep3() {
     });
 
     setSleepGoal(String(h), String(m).padStart(2, '0'));
-    
+
     // 6. Delay the redirect so they can read the confirmation
     setTimeout(() => {
-        router.replace('/home'); 
+        router.push('/onboarding4'); 
     }, 1500);
   };
 
@@ -113,7 +113,7 @@ export default function OnboardingStep3() {
           </Pressable>
 
           <View style={styles.textContainer}>
-            <Text style={styles.subtitle}>Step 3 of 3</Text>
+            <Text style={styles.subtitle}>Step 3 of 4</Text>
             <Text style={styles.title}>What is your sleep goal?</Text>
             <Text style={styles.description}>
               Tell us how much rest you want to get each night. We will track your progress to help you build healthier habits.
@@ -150,8 +150,8 @@ export default function OnboardingStep3() {
             style={[styles.finishButton, (!hours || !minutes) ? styles.disabledButton : null]} 
             onPress={handleFinish}
           >
-            <Text style={styles.finishButtonText}>Finish Setup</Text>
-            <Ionicons name="checkmark-circle" size={22} color="black" />
+            <Text style={styles.finishButtonText}>Continue</Text>
+            <Ionicons name="arrow-forward" size={22} color="black" />
           </Pressable>
         </View>
       </ScrollView>

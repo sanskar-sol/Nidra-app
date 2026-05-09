@@ -13,14 +13,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; // 1. Import Toast
-import { useStore } from '../store/useStore';
+import { useStore, StoreState } from '../store/useStore';
 
 export default function OnboardingStep2() {
   const router = useRouter();
   const [hour, setHour] = useState('');
   const [minute, setMinute] = useState('');
   const [period, setPeriod] = useState('AM');
-  const setWakeUpTime = useStore((state) => state.setWakeUpTime);
+  const setWakeUpTime = useStore((state: StoreState) => state.setWakeUpTime);
 
   // Handle input to ensure only numbers are typed
   const handleHourChange = (text: string) => {
@@ -119,7 +119,7 @@ export default function OnboardingStep2() {
           </Pressable>
 
           <View style={styles.textContainer}>
-            <Text style={styles.subtitle}>Step 2 of 3</Text>
+            <Text style={styles.subtitle}>Step 2 of 4</Text>
             <Text style={styles.title}>When do you need to wake up?</Text>
           <Text style={styles.description}>
               We&apos;ll use this to set your next alarm and calculate your optimal sleep window.

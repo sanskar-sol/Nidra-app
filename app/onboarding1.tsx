@@ -12,12 +12,12 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; // 1. Import Toast
-import { useStore } from '../store/useStore';
+import { useStore, StoreState } from '../store/useStore';
 
 export default function OnboardingStep1() {
   const router = useRouter();
   const [name, setName] = useState('');
-  const updateUser = useStore((state) => state.updateUser);
+  const updateUser = useStore((state: StoreState) => state.updateUser);
 
   const handleNext = () => {
     // 2. Replace alert() with an error Toast
@@ -55,7 +55,7 @@ export default function OnboardingStep1() {
       
       <View style={styles.content}>
         <View style={styles.textContainer}>
-          <Text style={styles.subtitle}>Step 1 of 3</Text>
+          <Text style={styles.subtitle}>Step 1 of 4</Text>
           <Text style={styles.title}>What should we call you?</Text>
           <Text style={styles.description}>
             We want your experience to feel personal and welcoming.

@@ -4,16 +4,16 @@ import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message'; 
-import { useStore } from '../store/useStore';
+import { useStore, StoreState } from '../store/useStore';
 
 export default function Settings() {
   const router = useRouter();
   const [image, setImage] = useState<string | null>(null);
-  const user = useStore((state) => state.user);
-  const sleepGoals = useStore((state) => state.sleepGoals);
-  const preferences = useStore((state) => state.preferences);
-  const updatePreferences = useStore((state) => state.updatePreferences);
-  const logoutUser = useStore((state) => state.logoutUser);
+  const user = useStore((state: StoreState) => state.user);
+  const sleepGoals = useStore((state: StoreState) => state.sleepGoals);
+  const preferences = useStore((state: StoreState) => state.preferences);
+  const updatePreferences = useStore((state: StoreState) => state.updatePreferences);
+  const logoutUser = useStore((state: StoreState) => state.logoutUser);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -153,6 +153,14 @@ export default function Settings() {
 
         {/* Preferences Card */}
         <View style={styles.card}>
+          <TouchableOpacity style={styles.row} onPress={() => router.push('/app-restrictions')}>
+            <View style={styles.optionLeft}>
+              <Ionicons name="shield-checkmark-outline" size={18} color="#9CA3AF" />
+              <Text style={styles.item}>App Restrictions</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#aaa" />
+          </TouchableOpacity>
+
           <View style={styles.row}>
             <Text style={styles.item}>Enable Strict Mode</Text>
             <ToggleSwitch 
@@ -267,6 +275,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
+  },
+  optionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   item: {
     color: 'white',

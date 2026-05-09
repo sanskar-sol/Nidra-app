@@ -1,21 +1,19 @@
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import Toast from 'react-native-toast-message'; // 1. Import Toast
-import { useStore } from '../store/useStore';
+import Toast from 'react-native-toast-message';
+import { useAuthStore, AuthState } from '../store/useAuthStore';
 
 export default function Index() {
-    // 2. Added state for email and password to handle validation
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     
     const router = useRouter();
-    const loginUser = useStore((state) => state.loginUser);
+    const loginUser = useAuthStore((state: AuthState) => state.loginUser);
 
     const handleLogin = () => {
-        // 3. Validation: Check if fields are empty
         if (!email.trim() || !password.trim()) {
             Toast.show({
                 type: 'error',
@@ -26,7 +24,6 @@ export default function Index() {
             return;
         }
 
-        // 4. Success Toast
         Toast.show({
             type: 'success',
             text1: 'Welcome back!',
@@ -36,79 +33,90 @@ export default function Index() {
 
         loginUser(email.trim());
 
-        // 5. Slight delay so the user can actually read the success message before redirecting
         setTimeout(() => {
-            router.push('/home');  
+            router.replace('/home');  
         }, 1500);
     };
 
     return (
         <View style={styles.background}>
-            <Text style={styles.title}>निद्रा</Text>
-            <Text style={styles.subtitle}>Sign in</Text>
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }} 
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContainer}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
+                >
+                    <Text style={styles.title}>निद्रा</Text>
+                    <Text style={styles.subtitle}>Sign in</Text>
 
-            <Text style={styles.smallText}>
-                If you don’t have an account,{"\n"}
-                You can{" "}
-                <Link href="/signup" style={styles.linkBlue}>
-                    Register here !
-                </Link>
-            </Text>
+                    <Text style={styles.smallText}>
+                        If you don’t have an account,{"\n"}
+                        You can{" "}
+                        <Link href="/signup" style={styles.linkBlue}>
+                            Register here !
+                        </Link>
+                    </Text>
 
-            <View style={styles.form}>
-                <Text style={styles.label}>Email</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        placeholder="Enter your email address"
-                        placeholderTextColor="#aaa"
-                        value={email} // Bound to state
-                        onChangeText={setEmail} // Bound to state
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        style={styles.input}
-                    />
-                    <Ionicons name="mail-outline" size={18} color="#ccc" style={styles.icon} />
-                </View>
+                    <View style={styles.form}>
+                        <Text style={styles.label}>Email</Text>
+                        <View style={styles.inputContainer}>
+                            <TextInput
+                                placeholder="Enter your email address"
+                                placeholderTextColor="#aaa"
+                                value={email}
+                                onChangeText={setEmail}
+                                autoCapitalize="none"
+                                keyboardType="email-address"
+                                style={styles.input}
+                            />
+                            <Ionicons name="mail-outline" size={18} color="#ccc" style={styles.icon} />
+                        </View>
 
-                <Text style={styles.label}>Password</Text>
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        placeholder="Enter your password"
-                        placeholderTextColor="#aaa"
-                        secureTextEntry={!showPassword}
-                        value={password} // Bound to state
-                        onChangeText={setPassword} // Bound to state
-                        style={styles.input}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        <Ionicons
-                            name={showPassword ? "eye" : "eye-off"}
-                            size={18}
-                            color="#ccc"
-                        />
-                    </TouchableOpacity>
-                </View>
+                        <Text style={styles.label}>Password</Text>
+                        <View style={styles.inputContainer}>
+                            <TextInput
+                                placeholder="Enter your password"
+                                placeholderTextColor="#aaa"
+                                secureTextEntry={!showPassword}
+                                value={password}
+                                onChangeText={setPassword}
+                                style={styles.input}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                <Ionicons
+                                    name={showPassword ? "eye" : "eye-off"}
+                                    size={18}
+                                    color="#ccc"
+                                />
+                            </TouchableOpacity>
+                        </View>
 
-                <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                    <Text style={styles.buttonText}>Login</Text>
-                </TouchableOpacity>
-                
-                <Text style={styles.orText}>or continue with</Text>
+                        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                            <Text style={styles.buttonText}>Login</Text>
+                        </TouchableOpacity>
+                        
+                        <Text style={styles.orText}>or continue with</Text>
 
-                <View style={styles.socialContainer}>
-                    <TouchableOpacity style={styles.socialIcon}>
-                        <FontAwesome name="facebook" size={22} color="#1877F2" />
-                    </TouchableOpacity>
+                        <View style={styles.socialContainer}>
+                            <TouchableOpacity style={styles.socialIcon}>
+                                <FontAwesome name="facebook" size={22} color="#1877F2" />
+                            </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.socialIcon}>
-                        <Ionicons name="logo-apple" size={22} color="white" />
-                    </TouchableOpacity>
+                            <TouchableOpacity style={styles.socialIcon}>
+                                <Ionicons name="logo-apple" size={22} color="white" />
+                            </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.socialIcon}>
-                        <FontAwesome name="google" size={22} color="#DB4437" />
-                    </TouchableOpacity>
-                </View>
-            </View>
+                            <TouchableOpacity style={styles.socialIcon}>
+                                <FontAwesome name="google" size={22} color="#DB4437" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </View>    
     );
 }
@@ -117,8 +125,12 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     backgroundColor: '#262625', 
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 30,
+    paddingVertical: 40,
   },
   title: {
     color: 'white',

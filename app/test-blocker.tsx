@@ -7,6 +7,7 @@ import {
   ScrollView,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -16,18 +17,21 @@ import { sleepBlocker } from '../store/sleepBlocker';
 export default function TestBlockerScreen() {
   const router = useRouter();
   const [canOverlay, setCanOverlay] = useState<boolean | null>(null);
-  const [hasUsageAccess, setHasUsageAccess] = useState<boolean | null>(null);
+  const [isAccessibilityEnabled, setIsAccessibilityEnabled] = useState<boolean | null>(null);
   const [serviceRunning, setServiceRunning] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const refreshPermissions = useCallback(async () => {
+    setRefreshing(true);
     try {
-      const [overlayStatus, usageStatus] = await Promise.all([
+      const [overlayStatus, accessibilityStatus] = await Promise.all([
         sleepBlocker.canDrawOverlays(),
-        sleepBlocker.hasUsageAccess(),
+        sleepBlocker.isAccessibilityServiceEnabled(),
       ]);
       setCanOverlay(overlayStatus);
-      setHasUsageAccess(usageStatus);
+      setIsAccessibilityEnabled(accessibilityStatus);
+      Toast.show({ type: 'success', text1: 'Status Updated', text2: 'Permission status refreshed.', position: 'top' });
     } catch (error) {
       Toast.show({
         type: 'error',
@@ -35,6 +39,8 @@ export default function TestBlockerScreen() {
         text2: 'Unable to read Android blocker permissions.',
         position: 'top',
       });
+    } finally {
+      setRefreshing(false);
     }
   }, []);
 
@@ -49,7 +55,7 @@ export default function TestBlockerScreen() {
   };
 
   const openUsageSettings = () => {
-    sleepBlocker.openUsageAccessSettings();
+    sleepBlocker.openAccessibilitySettings();
   };
 
   const startEngine = async () => {
@@ -60,7 +66,7 @@ export default function TestBlockerScreen() {
       Toast.show({
         type: 'success',
         text1: 'Engine Started',
-        text2: 'Instagram blocker service is active.',
+        text2: 'Service blocker service is active.',
         position: 'top',
       });
     } catch (error) {
@@ -83,7 +89,7 @@ export default function TestBlockerScreen() {
       Toast.show({
         type: 'success',
         text1: 'Engine Stopped',
-        text2: 'Instagram blocker service has been stopped.',
+        text2: 'Sleep blocker service has been stopped.',
         position: 'top',
       });
     } catch (error) {
@@ -120,8 +126,8 @@ export default function TestBlockerScreen() {
             <Ionicons name="arrow-back" size={28} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Sleep Blocker Test</Text>
-          <TouchableOpacity onPress={refreshPermissions}>
-            <Ionicons name="refresh" size={24} color="#B0B0B0" />
+          <TouchableOpacity onPress={refreshPermissions} disabled={refreshing}>
+            {refreshing ? <ActivityIndicator size="small" color="#B0B0B0" /> : <Ionicons name="refresh" size={24} color="#B0B0B0" />}
           </TouchableOpacity>
         </View>
 
@@ -134,9 +140,9 @@ export default function TestBlockerScreen() {
             </Text>
           </View>
           <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>Usage Access</Text>
-            <Text style={[styles.statusValue, { color: statusColor(hasUsageAccess) }]}>
-              {statusLabel(hasUsageAccess)}
+            <Text style={styles.statusLabel}>Accessibility Service</Text>
+            <Text style={[styles.statusValue, { color: statusColor(isAccessibilityEnabled) }]}>
+              {statusLabel(isAccessibilityEnabled)}
             </Text>
           </View>
         </View>
@@ -147,7 +153,7 @@ export default function TestBlockerScreen() {
             <Text style={styles.secondaryButtonText}>Open Overlay Permission Settings</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.secondaryButton} onPress={openUsageSettings}>
-            <Text style={styles.secondaryButtonText}>Open Usage Access Settings</Text>
+            <Text style={styles.secondaryButtonText}>Open Accessibility Settings</Text>
           </TouchableOpacity>
         </View>
 

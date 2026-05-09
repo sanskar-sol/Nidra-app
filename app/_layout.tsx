@@ -1,9 +1,12 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { View, Text, StyleSheet } from 'react-native';
+import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFonts, Inter_300Light, Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Lora_400Regular, Lora_500Medium } from '@expo-google-fonts/lora';
+import { useAuthStore, AuthState } from '../store/useAuthStore';
+import { useStore, StoreState } from '../store/useStore';
 
 // 1. Define your custom toast layouts
 const toastConfig = {
@@ -31,6 +34,9 @@ const toastConfig = {
 };
 
 export default function RootLayout() {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((state: AuthState) => state.isAuthenticated);
+
   const [fontsLoaded] = useFonts({
     Inter_300Light,
     Inter_400Regular,
@@ -38,6 +44,20 @@ export default function RootLayout() {
     Lora_400Regular,
     Lora_500Medium,
   });
+
+  const activeSleepSession = useStore((state: StoreState) => state.activeSleepSession);
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      if (isAuthenticated) {
+        if (activeSleepSession) {
+          router.replace('/sleepmode1');
+        } else {
+          router.replace('/home');
+        }
+      }
+    }
+  }, [fontsLoaded, isAuthenticated, activeSleepSession]);
 
   if (!fontsLoaded) {
     return null;

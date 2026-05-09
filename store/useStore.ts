@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import { secureStorage } from './secureStorage';
+import { sleepBlocker } from './sleepBlocker';
 import {
   ClockTime,
   SleepMode,
@@ -42,11 +44,12 @@ interface SleepSession {
   snoozesUsed: number;
 }
 
-interface StoreState {
+export interface StoreState {
   user: User | null;
   sleepGoals: SleepGoals;
   sleepGoalMinutes: number;
   defaultAlarm: ClockTime;
+  blockedApps: string[];
   sleepDebtMinutes: number;
   latestBedtimeAlertISO: string | null;
   pointOfNoReturnTriggerISO: string | null;
@@ -57,6 +60,7 @@ interface StoreState {
   updateUser: (data: Partial<User>) => void;
   setWakeUpTime: (hour: string, minute: string, period: string) => void;
   setSleepGoal: (hours: string, minutes: string) => void;
+  toggleAppBlock: (appId: string) => void;
   startSleepMode: (bedtime?: Date) => SleepSession;
   registerSnooze: () => { allowed: boolean; intervalMinutes: number; remaining: number };
   clearSleepSession: () => void;
@@ -67,7 +71,7 @@ interface StoreState {
 
 export const useStore = create<StoreState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       sleepGoals: {
         wakeUpHour: '06',
@@ -82,6 +86,7 @@ export const useStore = create<StoreState>()(
         minute: '30',
         period: 'AM',
       },
+      blockedApps: [],
       sleepDebtMinutes: 0,
       latestBedtimeAlertISO: new Date(
         buildNextDefaultAlarmDate(new Date(), { hour: '06', minute: '30', period: 'AM' }).getTime() -
@@ -105,7 +110,7 @@ export const useStore = create<StoreState>()(
       updateUser: (data) => set((state) => ({ 
         user: state.user 
           ? { ...state.user, ...data } 
-          : { name: data.name || '', email: data.email || '' } 
+          : { name: data.name || '', email: data.email || '', ...data } as User
       })),
       
       setWakeUpTime: (hour, minute, period) => set((state) => {
@@ -146,8 +151,26 @@ export const useStore = create<StoreState>()(
         };
       }),
 
+      toggleAppBlock: (appId) =>
+        set((state) => {
+          const exists = state.blockedApps.includes(appId);
+          const newBlockedApps = exists
+            ? state.blockedApps.filter((id) => id !== appId)
+            : [...state.blockedApps, appId];
+            
+          if (Platform.OS === 'android') {
+            try {
+              sleepBlocker.updateBlockedApps(newBlockedApps);
+            } catch (error) {
+              console.error('Failed to sync native blocker', error);
+            }
+          }
+            
+          return { blockedApps: newBlockedApps };
+        }),
+
       startSleepMode: (bedtime = new Date()) => {
-        const state = useStore.getState();
+        const state = get();
         const result = computeResponsibilityCappedAlarm({
           bedtime,
           sleepGoalMinutes: state.sleepGoalMinutes,
@@ -169,6 +192,14 @@ export const useStore = create<StoreState>()(
           snoozesUsed: 0,
         };
 
+        if (Platform.OS === 'android') {
+          try {
+            sleepBlocker.setAlarm(result.actualAlarmTime.getTime());
+          } catch (error) {
+            console.error('Failed to schedule native alarm', error);
+          }
+        }
+
         set((prev) => ({
           activeSleepSession: session,
           sleepDebtMinutes: prev.sleepDebtMinutes + result.debtAddedMinutes,
@@ -180,7 +211,7 @@ export const useStore = create<StoreState>()(
       },
 
       registerSnooze: () => {
-        const session = useStore.getState().activeSleepSession;
+        const session = get().activeSleepSession;
         if (!session) {
           return { allowed: false, intervalMinutes: 0, remaining: 0 };
         }
@@ -214,7 +245,13 @@ export const useStore = create<StoreState>()(
         };
       },
 
-      clearSleepSession: () => set({ activeSleepSession: null }),
+      clearSleepSession: () => {
+        if (Platform.OS === 'android') {
+          sleepBlocker.stop().catch(console.error);
+          sleepBlocker.cancelAlarm().catch(console.error);
+        }
+        set({ activeSleepSession: null, latestBedtimeAlertISO: null, pointOfNoReturnTriggerISO: null });
+      },
 
       reduceSleepDebt: (minutes) =>
         set((state) => ({ sleepDebtMinutes: Math.max(0, state.sleepDebtMinutes - Math.max(0, minutes)) })),
@@ -228,7 +265,7 @@ export const useStore = create<StoreState>()(
     }),
     {
       name: 'nidra-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => secureStorage),
     }
   )
 );

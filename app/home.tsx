@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, StatusBar, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Dimensions, StatusBar, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import Toast from 'react-native-toast-message';
-import { useStore } from '../store/useStore';
+import { useStore, StoreState } from '../store/useStore';
 import { getLatestBedtime, isFriday } from '../store/sleepMath';
+import { sleepBlocker } from '../store/sleepBlocker';
+import { Clock } from '../components/Clock';
 
 // Victory Native (Skia-based)
 import { CartesianChart, Line, Area } from "victory-native";
@@ -27,20 +29,16 @@ const CHART_GREEN = "#22c55e";
 
 export default function Home() {
   const router = useRouter(); 
-  const user = useStore((state) => state.user);
-  const sleepGoals = useStore((state) => state.sleepGoals);
-  const sleepDebtMinutes = useStore((state) => state.sleepDebtMinutes);
-  const startSleepMode = useStore((state) => state.startSleepMode);
-  const pointOfNoReturnTriggerISO = useStore((state) => state.pointOfNoReturnTriggerISO);
+  const user = useStore((state: StoreState) => state.user);
+  const sleepGoals = useStore((state: StoreState) => state.sleepGoals);
+  const sleepDebtMinutes = useStore((state: StoreState) => state.sleepDebtMinutes);
+  const startSleepMode = useStore((state: StoreState) => state.startSleepMode);
+  const pointOfNoReturnTriggerISO = useStore((state: StoreState) => state.pointOfNoReturnTriggerISO);
+  const blockedApps = useStore((state: StoreState) => state.blockedApps);
 
-  const [time, setTime] = useState(dayjs());
+  const [showMockData, setShowMockData] = useState(true);
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(dayjs()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const currentHour = time.hour(); 
+  const currentHour = dayjs().hour(); 
   let greetingMessage = "Good evening 🌆";
   if (currentHour >= 5 && currentHour < 12)  greetingMessage = "Good morning 🌅";
   else if (currentHour >= 12 && currentHour < 17) greetingMessage = "Good afternoon ☀️";
@@ -73,7 +71,43 @@ export default function Home() {
     return nowTs >= triggerTs && nowTs <= triggerTs + 30 * 60 * 1000;
   })();
 
-  const handleStartSleepMode = () => {
+  const handleStartSleepMode = async () => {
+    if (blockedApps.length === 0) {
+      Alert.alert(
+        'No Apps Selected',
+        'Please select apps to block before starting Sleep Mode.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Select Apps', onPress: () => router.push('/app-restrictions') }
+        ]
+      );
+      return;
+    }
+
+    if (Platform.OS === 'android') {
+      const hasOverlay = await sleepBlocker.canDrawOverlays();
+      const hasAccessibility = await sleepBlocker.isAccessibilityServiceEnabled();
+      
+      if (!hasOverlay || !hasAccessibility) {
+        Alert.alert(
+          'Permissions Required',
+          'Sleep Blocker requires native permissions to function. Please complete setup.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Setup', onPress: () => router.push('/test-blocker') }
+          ]
+        );
+        return;
+      }
+
+      console.log(`Sleep Mode Active. Blocking the following apps: ${JSON.stringify(blockedApps)}`);
+      try {
+        sleepBlocker.updateBlockedApps(blockedApps);
+        await sleepBlocker.start();
+      } catch (error) {
+        console.error('Failed to start native sleep blocker', error);
+      }
+    }
     const session = startSleepMode();
     const isStrict = session.mode === 'strict';
     Toast.show({
@@ -105,10 +139,7 @@ export default function Home() {
         <Text style={styles.greeting}>{greetingMessage}, {displayName}</Text>
 
         <View style={styles.clockContainer}>
-          <View style={styles.clockRow}>
-            <Text style={styles.mainClockText}>{time.format('h:mm')}</Text>
-            <Text style={styles.ampmText}>{time.format('A')}</Text>
-          </View>
+          <Clock />
         </View>
 
         <View style={styles.row}>
@@ -159,81 +190,97 @@ export default function Home() {
         <View style={styles.graphCard}>
           <View style={styles.graphHeader}>
             <Text style={styles.graphTitle}>Weekly Insights</Text>
-            <Text style={styles.graphStats}>Avg: 7.1 hrs</Text>
-          </View>
-
-          <View style={{ height: 160 }}>
-            <CartesianChart
-              data={SLEEP_DATA}
-              xKey="day"
-              yKeys={["hours"]}
-              domain={{ y: [0, 10] }}
-              domainPadding={{ left: 16, right: 16, top: 24, bottom: 4 }}
-              axisOptions={{
-                lineColor: "rgba(255,255,255,0.06)",
-                labelColor: { x: "transparent", y: "rgba(176,176,176,0.5)" },
-                tickCount: { x: 7, y: 4 },
-                labelOffset: { x: 0, y: 8 },
-                axisSide: { x: "bottom", y: "left" },
-              }}
+            <Pressable 
+              style={styles.toggleDataBtn} 
+              onPress={() => setShowMockData(!showMockData)}
             >
-            {({ points, chartBounds }) => (
-              <>
-                {/* Gradient area fill */}
-                <Area
-                  points={points.hours}
-                  y0={chartBounds.bottom}
-                  animate={{ type: "timing", duration: 500 }}
-                  curveType="natural"
+              <Text style={styles.toggleDataText}>
+                {showMockData ? 'Mock' : 'Real'}
+              </Text>
+            </Pressable>
+          </View>
+
+          {showMockData ? (
+            <>
+              <View style={{ height: 160 }}>
+                <CartesianChart
+                  data={SLEEP_DATA}
+                  xKey="day"
+                  yKeys={["hours"]}
+                  domain={{ y: [0, 10] }}
+                  domainPadding={{ left: 16, right: 16, top: 24, bottom: 4 }}
+                  axisOptions={{
+                    lineColor: "rgba(255,255,255,0.06)",
+                    labelColor: { x: "transparent", y: "rgba(176,176,176,0.5)" },
+                    tickCount: { x: 7, y: 4 },
+                    labelOffset: { x: 0, y: 8 },
+                    axisSide: { x: "bottom", y: "left" },
+                  }}
                 >
-                  <LinearGradient
-                    start={vec(0, chartBounds.top)}
-                    end={vec(0, chartBounds.bottom)}
-                    colors={["rgba(34, 197, 94, 0.22)", "rgba(34, 197, 94, 0.0)"]}
-                  />
-                </Area>
+                {({ points, chartBounds }) => (
+                  <>
+                    {/* Gradient area fill */}
+                    <Area
+                      points={points.hours}
+                      y0={chartBounds.bottom}
+                      animate={{ type: "timing", duration: 500 }}
+                      curveType="natural"
+                    >
+                      <LinearGradient
+                        start={vec(0, chartBounds.top)}
+                        end={vec(0, chartBounds.bottom)}
+                        colors={["rgba(34, 197, 94, 0.22)", "rgba(34, 197, 94, 0.0)"]}
+                      />
+                    </Area>
 
-                {/* Main line */}
-                <Line
-                  points={points.hours}
-                  color={CHART_GREEN}
-                  strokeWidth={2.5}
-                  animate={{ type: "timing", duration: 500 }}
-                  curveType="natural"
-                />
+                    {/* Main line */}
+                    <Line
+                      points={points.hours}
+                      color={CHART_GREEN}
+                      strokeWidth={2.5}
+                      animate={{ type: "timing", duration: 500 }}
+                      curveType="natural"
+                    />
 
-                {/* Dots */}
-                {points.hours.map((p, i) => (
-                  <Circle
-                    key={i}
-                    cx={p.x}
-                    cy={p.y ?? 0}
-                    r={4.5}
-                    color={CHART_GREEN}
-                  />
+                    {/* Dots */}
+                    {points.hours.map((p, i) => (
+                      <Circle
+                        key={i}
+                        cx={p.x}
+                        cy={p.y ?? 0}
+                        r={4.5}
+                        color={CHART_GREEN}
+                      />
+                    ))}
+
+                    {/* Inner dot (white fill = ring effect) */}
+                    {points.hours.map((p, i) => (
+                      <Circle
+                        key={`inner-${i}`}
+                        cx={p.x}
+                        cy={p.y ?? 0}
+                        r={2}
+                        color="rgba(255,255,255,0.9)"
+                      />
+                    ))}
+                  </>
+                )}
+                </CartesianChart>
+              </View>
+
+              {/* Custom x-axis labels */}
+              <View style={styles.xLabels}>
+                {DAY_LABELS.map((label) => (
+                  <Text key={label} style={styles.xLabel}>{label}</Text>
                 ))}
-
-                {/* Inner dot (white fill = ring effect) */}
-                {points.hours.map((p, i) => (
-                  <Circle
-                    key={`inner-${i}`}
-                    cx={p.x}
-                    cy={p.y ?? 0}
-                    r={2}
-                    color="rgba(255,255,255,0.9)"
-                  />
-                ))}
-              </>
-            )}
-          </CartesianChart>
-          </View>
-
-          {/* Custom x-axis labels */}
-          <View style={styles.xLabels}>
-            {DAY_LABELS.map((label) => (
-              <Text key={label} style={styles.xLabel}>{label}</Text>
-            ))}
-          </View>
+              </View>
+            </>
+          ) : (
+            <View style={styles.emptyGraphCard}>
+              <Ionicons name="bar-chart-outline" size={36} color="rgba(255,255,255,0.15)" style={{ marginBottom: 10 }} />
+              <Text style={styles.emptyGraphText}>Start your first Sleep Protocol tonight to generate insights.</Text>
+            </View>
+          )}
         </View>
 
         <Pressable 
@@ -269,9 +316,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontFamily: 'Inter_600SemiBold', color: 'white' },
   greeting: { fontSize: 28, color: 'white', fontFamily: 'Lora_400Regular', marginBottom: 10 },
   clockContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 10, marginBottom: 30 },
-  clockRow: { flexDirection: 'row', alignItems: 'baseline' },
-  mainClockText: { fontSize: 100, color: 'white', fontFamily: 'Inter_300Light', letterSpacing: 1 },
-  ampmText: { fontSize: 24, color: 'white', fontFamily: 'Inter_300Light', marginLeft: 8 },
   row: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   cardHalf: {
     flex: 1,
@@ -297,6 +341,20 @@ const styles = StyleSheet.create({
   },
   graphHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   graphTitle: { color: 'white', fontSize: 18, fontFamily: 'Lora_500Medium' },
+  toggleDataBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  toggleDataText: {
+    color: '#B0B0B0',
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    textTransform: 'uppercase',
+  },
   graphStats: { color: CHART_GREEN, fontSize: 14, fontFamily: 'Inter_400Regular' },
 
   xLabels: {
@@ -353,5 +411,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
     flex: 1,
+  },
+  emptyGraphCard: {
+    height: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    marginTop: 10,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+  },
+  emptyGraphText: {
+    color: '#808080',
+    fontFamily: 'Inter_300Light',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

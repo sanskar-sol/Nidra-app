@@ -1,1 +1,1 @@
-hello sanskar
+I wanted take the list of the apps the user has installed instead of mock apps so it really works. So just answer can you do that?

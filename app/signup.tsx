@@ -11,11 +11,10 @@ import {
     Platform 
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
-import Toast from 'react-native-toast-message'; // 1. Import Toast
-import { useStore } from '../store/useStore';
+import Toast from 'react-native-toast-message';
+import { useStore, StoreState } from '../store/useStore';
 
 export default function Signup() {
-    // 2. Added state for email and username for validation
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -24,10 +23,9 @@ export default function Signup() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const router = useRouter(); 
-    const loginUser = useStore((state) => state.loginUser);
+    const loginUser = useStore((state: StoreState) => state.loginUser);
 
     const handleSignup = () => {
-        // 3. Check if any fields are empty
         if (!email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
             Toast.show({
                 type: 'error',
@@ -38,7 +36,6 @@ export default function Signup() {
             return;
         }
 
-        // 4. Replace alert() with a custom error Toast
         if (password !== confirmPassword) {
             Toast.show({
                 type: 'error',
@@ -49,7 +46,6 @@ export default function Signup() {
             return;
         }
         
-        // 5. Success Toast
         Toast.show({
             type: 'success',
             text1: 'Account Created',
@@ -59,7 +55,6 @@ export default function Signup() {
 
         loginUser(email.trim());
 
-        // 6. Delay the redirect so the user sees the success message
         setTimeout(() => {
             router.push('/onboarding1');
         }, 1500);
@@ -69,13 +64,14 @@ export default function Signup() {
         <View style={styles.masterBackground}>
             <KeyboardAvoidingView 
                 style={styles.keyboardView} 
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <ScrollView 
                     style={styles.scrollView}
                     contentContainerStyle={styles.scrollContainer}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
+                    keyboardDismissMode="on-drag"
                 >
                     <Text style={styles.title}>निद्रा</Text>
                     <Text style={styles.subtitle}>Sign up</Text>
@@ -94,8 +90,8 @@ export default function Signup() {
                             <TextInput
                                 placeholder="Enter your email address"
                                 placeholderTextColor="#aaa"
-                                value={email} // Bound to state
-                                onChangeText={setEmail} // Bound to state
+                                value={email}
+                                onChangeText={setEmail}
                                 autoCapitalize="none"
                                 keyboardType="email-address"
                                 style={styles.input}
@@ -108,8 +104,8 @@ export default function Signup() {
                             <TextInput
                                 placeholder="Enter your username"
                                 placeholderTextColor="#aaa"
-                                value={username} // Bound to state
-                                onChangeText={setUsername} // Bound to state
+                                value={username}
+                                onChangeText={setUsername}
                                 autoCapitalize="none"
                                 style={styles.input}
                             />
