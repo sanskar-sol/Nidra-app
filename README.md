@@ -8,7 +8,7 @@ Maybe you can mention me or this repo in the acknowledgements too
 -->
 <div align="center">
 
-  <img src="assets/images/image.png" alt="logo" width="160" height="auto" />
+  <img src="assets/images/logo.png" alt="logo" width="160" height="auto" />
   <h1>Nidra</h1>
   
   <p>
